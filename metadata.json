@@ -1,0 +1,6 @@
+{
+  "name": "FrameSheet",
+  "description": "Spreadsheet-style film tracker, ranking workspace, viewing analytics, and multi-profile comparison tool for Letterboxd accounts via external profile fetching and CSV imports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

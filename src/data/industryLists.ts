@@ -1,0 +1,258 @@
+export type ExternalListCategory = 'awards' | 'critics_poll' | 'periodical';
+
+export type AwardOutcomeStatus = 'Winner' | 'Nominee' | 'Ranked';
+
+export interface ExternalListEntry {
+  rank: number; // Poll rank (1..N) or Ceremony Year order
+  title: string;
+  year: number;
+  director: string;
+  genres: string[];
+  status: AwardOutcomeStatus;
+  ceremonyOrIssue: string; // e.g. "96th Oscars (2024)", "Sight & Sound 2022 Decennial", "Empire #1 of 2024"
+  accoladeDetail: string; // e.g. "Best Picture Winner · 7 Oscars", "SAG Ensemble + DGA + PGA Winner", "Ranked #4 All-Time"
+  consensusRating: number; // 0.5 - 5.0 benchmark score for alignment delta
+}
+
+export interface ExternalCanonicalList {
+  id: string;
+  title: string;
+  shortName: string;
+  organization: string;
+  category: ExternalListCategory;
+  description: string;
+  hasWinnerNomineeSplit: boolean;
+  entries: ExternalListEntry[];
+}
+
+export const INDUSTRY_AND_CRITIC_LISTS: ExternalCanonicalList[] = [
+  {
+    id: 'academy-awards-oscars',
+    title: 'Academy Awards (Oscars) — Best Picture Winners & Nominees',
+    shortName: 'Academy Awards (Oscars)',
+    organization: 'AMPAS',
+    category: 'awards',
+    description:
+      'Academy Award for Best Picture winners and major nominees across recent ceremonies and landmark Oscar history.',
+    hasWinnerNomineeSplit: true,
+    entries: [
+      { rank: 1, title: 'Anora', year: 2024, director: 'Sean Baker', genres: ['Drama', 'Comedy', 'Romance'], status: 'Winner', ceremonyOrIssue: '97th Oscars (2025)', accoladeDetail: 'Best Picture Winner · 5 Academy Awards (incl. Director, Actress, Original Screenplay)', consensusRating: 4.3 },
+      { rank: 2, title: 'The Brutalist', year: 2024, director: 'Brady Corbet', genres: ['Drama', 'History'], status: 'Nominee', ceremonyOrIssue: '97th Oscars (2025)', accoladeDetail: 'Best Picture Nominee · 10 Nominations · 3 Wins (Actor, Cinematography, Score)', consensusRating: 4.2 },
+      { rank: 3, title: 'Conclave', year: 2024, director: 'Edward Berger', genres: ['Thriller', 'Drama', 'Mystery'], status: 'Nominee', ceremonyOrIssue: '97th Oscars (2025)', accoladeDetail: 'Best Picture Nominee · Won Best Adapted Screenplay', consensusRating: 3.9 },
+      { rank: 4, title: 'Dune: Part Two', year: 2024, director: 'Denis Villeneuve', genres: ['Sci-Fi', 'Action', 'Drama'], status: 'Nominee', ceremonyOrIssue: '97th Oscars (2025)', accoladeDetail: 'Best Picture Nominee · 2 Wins (Sound, Visual Effects)', consensusRating: 4.5 },
+      { rank: 5, title: 'The Substance', year: 2024, director: 'Coralie Fargeat', genres: ['Horror', 'Sci-Fi', 'Drama'], status: 'Nominee', ceremonyOrIssue: '97th Oscars (2025)', accoladeDetail: 'Best Picture Nominee · 5 Nominations · Won Makeup & Hairstyling', consensusRating: 4.0 },
+      { rank: 6, title: 'Oppenheimer', year: 2023, director: 'Christopher Nolan', genres: ['Drama', 'History'], status: 'Winner', ceremonyOrIssue: '96th Oscars (2024)', accoladeDetail: 'Best Picture Winner · 7 Academy Awards (incl. Director, Actor, Cinematography)', consensusRating: 4.3 },
+      { rank: 7, title: 'Poor Things', year: 2023, director: 'Yorgos Lanthimos', genres: ['Comedy', 'Sci-Fi', 'Romance'], status: 'Nominee', ceremonyOrIssue: '96th Oscars (2024)', accoladeDetail: 'Best Picture Nominee · 11 Nominations · 4 Wins (Actress, Production Design)', consensusRating: 4.1 },
+      { rank: 8, title: 'Anatomy of a Fall', year: 2023, director: 'Justine Triet', genres: ['Drama', 'Mystery', 'Crime'], status: 'Nominee', ceremonyOrIssue: '96th Oscars (2024)', accoladeDetail: 'Best Picture Nominee · 5 Nominations · Won Best Original Screenplay', consensusRating: 4.4 },
+      { rank: 9, title: 'The Zone of Interest', year: 2023, director: 'Jonathan Glazer', genres: ['Drama', 'History'], status: 'Nominee', ceremonyOrIssue: '96th Oscars (2024)', accoladeDetail: 'Best Picture Nominee · 2 Wins (International Feature, Sound)', consensusRating: 4.3 },
+      { rank: 10, title: 'Past Lives', year: 2023, director: 'Celine Song', genres: ['Drama', 'Romance'], status: 'Nominee', ceremonyOrIssue: '96th Oscars (2024)', accoladeDetail: 'Best Picture & Best Original Screenplay Nominee', consensusRating: 4.3 },
+      { rank: 11, title: 'Everything Everywhere All at Once', year: 2022, director: 'Daniel Kwan, Daniel Scheinert', genres: ['Sci-Fi', 'Action', 'Comedy'], status: 'Winner', ceremonyOrIssue: '95th Oscars (2023)', accoladeDetail: 'Best Picture Winner · 7 Academy Awards (incl. Director, Actress, Editing)', consensusRating: 4.3 },
+      { rank: 12, title: 'Tár', year: 2022, director: 'Todd Field', genres: ['Drama', 'Music'], status: 'Nominee', ceremonyOrIssue: '95th Oscars (2023)', accoladeDetail: 'Best Picture Nominee · 6 Nominations (Director, Actress, Cinematography)', consensusRating: 4.2 },
+      { rank: 13, title: 'The Banshees of Inisherin', year: 2022, director: 'Martin McDonagh', genres: ['Drama', 'Comedy'], status: 'Nominee', ceremonyOrIssue: '95th Oscars (2023)', accoladeDetail: 'Best Picture Nominee · 9 Nominations', consensusRating: 4.1 },
+      { rank: 14, title: 'Drive My Car', year: 2021, director: 'Ryusuke Hamaguchi', genres: ['Drama'], status: 'Nominee', ceremonyOrIssue: '94th Oscars (2022)', accoladeDetail: 'Best Picture Nominee · Won Best International Feature Film', consensusRating: 4.4 },
+      { rank: 15, title: 'Parasite', year: 2019, director: 'Bong Joon-ho', genres: ['Drama', 'Thriller', 'Comedy'], status: 'Winner', ceremonyOrIssue: '92nd Oscars (2020)', accoladeDetail: 'Best Picture Winner · 4 Academy Awards (Picture, Director, Screenplay, International)', consensusRating: 4.6 },
+      { rank: 16, title: 'Phantom Thread', year: 2017, director: 'Paul Thomas Anderson', genres: ['Drama', 'Romance'], status: 'Nominee', ceremonyOrIssue: '90th Oscars (2018)', accoladeDetail: 'Best Picture Nominee · 6 Nominations · Won Costume Design', consensusRating: 4.2 },
+      { rank: 17, title: 'Get Out', year: 2017, director: 'Jordan Peele', genres: ['Horror', 'Thriller', 'Mystery'], status: 'Nominee', ceremonyOrIssue: '90th Oscars (2018)', accoladeDetail: 'Best Picture Nominee · Won Best Original Screenplay', consensusRating: 4.2 },
+      { rank: 18, title: 'Lady Bird', year: 2017, director: 'Greta Gerwig', genres: ['Comedy', 'Drama'], status: 'Nominee', ceremonyOrIssue: '90th Oscars (2018)', accoladeDetail: 'Best Picture Nominee · 5 Nominations', consensusRating: 4.0 },
+      { rank: 19, title: 'Moonlight', year: 2016, director: 'Barry Jenkins', genres: ['Drama'], status: 'Winner', ceremonyOrIssue: '89th Oscars (2017)', accoladeDetail: 'Best Picture Winner · 3 Academy Awards (Picture, Adapted Screenplay, Supporting Actor)', consensusRating: 4.4 },
+      { rank: 20, title: 'La La Land', year: 2016, director: 'Damien Chazelle', genres: ['Music', 'Romance', 'Drama'], status: 'Nominee', ceremonyOrIssue: '89th Oscars (2017)', accoladeDetail: 'Best Picture Nominee · 14 Nominations · 6 Wins (Director, Actress, Score)', consensusRating: 4.1 },
+      { rank: 21, title: 'Arrival', year: 2016, director: 'Denis Villeneuve', genres: ['Sci-Fi', 'Drama', 'Mystery'], status: 'Nominee', ceremonyOrIssue: '89th Oscars (2017)', accoladeDetail: 'Best Picture Nominee · 8 Nominations · Won Sound Editing', consensusRating: 4.3 },
+      { rank: 22, title: 'Mad Max: Fury Road', year: 2015, director: 'George Miller', genres: ['Action', 'Sci-Fi', 'Thriller'], status: 'Nominee', ceremonyOrIssue: '88th Oscars (2016)', accoladeDetail: 'Best Picture Nominee · 10 Nominations · 6 Craft Wins', consensusRating: 4.4 },
+      { rank: 23, title: 'Grand Budapest Hotel', year: 2014, director: 'Wes Anderson', genres: ['Comedy', 'Drama', 'Crime'], status: 'Nominee', ceremonyOrIssue: '87th Oscars (2015)', accoladeDetail: 'Best Picture Nominee · 9 Nominations · 4 Wins', consensusRating: 4.3 },
+      { rank: 24, title: 'Whiplash', year: 2014, director: 'Damien Chazelle', genres: ['Drama', 'Music'], status: 'Nominee', ceremonyOrIssue: '87th Oscars (2015)', accoladeDetail: 'Best Picture Nominee · 3 Wins (Supporting Actor, Editing, Sound Mixing)', consensusRating: 4.5 },
+      { rank: 25, title: 'The Social Network', year: 2010, director: 'David Fincher', genres: ['Drama', 'History'], status: 'Nominee', ceremonyOrIssue: '83rd Oscars (2011)', accoladeDetail: 'Best Picture Nominee · 8 Nominations · 3 Wins (Adapted Screenplay, Score, Editing)', consensusRating: 4.3 },
+      { rank: 26, title: 'No Country for Old Men', year: 2007, director: 'Joel & Ethan Coen', genres: ['Crime', 'Thriller', 'Drama'], status: 'Winner', ceremonyOrIssue: '80th Oscars (2008)', accoladeDetail: 'Best Picture Winner · 4 Academy Awards (Picture, Director, Screenplay, Supporting Actor)', consensusRating: 4.5 },
+      { rank: 27, title: 'There Will Be Blood', year: 2007, director: 'Paul Thomas Anderson', genres: ['Drama', 'History'], status: 'Nominee', ceremonyOrIssue: '80th Oscars (2008)', accoladeDetail: 'Best Picture Nominee · 8 Nominations · 2 Wins (Actor, Cinematography)', consensusRating: 4.6 },
+      { rank: 28, title: 'Fargo', year: 1996, director: 'Joel & Ethan Coen', genres: ['Crime', 'Thriller', 'Comedy'], status: 'Nominee', ceremonyOrIssue: '69th Oscars (1997)', accoladeDetail: 'Best Picture Nominee · 2 Wins (Actress, Original Screenplay)', consensusRating: 4.3 },
+      { rank: 29, title: 'Pulp Fiction', year: 1994, director: 'Quentin Tarantino', genres: ['Crime', 'Thriller', 'Comedy'], status: 'Nominee', ceremonyOrIssue: '67th Oscars (1995)', accoladeDetail: 'Best Picture Nominee · 7 Nominations · Won Original Screenplay', consensusRating: 4.5 },
+      { rank: 30, title: 'The Silence of the Lambs', year: 1991, director: 'Jonathan Demme', genres: ['Crime', 'Horror', 'Thriller'], status: 'Winner', ceremonyOrIssue: '64th Oscars (1992)', accoladeDetail: 'Big Five Sweep Winner (Picture, Director, Actor, Actress, Screenplay)', consensusRating: 4.5 },
+      { rank: 31, title: 'GoodFellas', year: 1990, director: 'Martin Scorsese', genres: ['Crime', 'Drama'], status: 'Nominee', ceremonyOrIssue: '63rd Oscars (1991)', accoladeDetail: 'Best Picture Nominee · 6 Nominations · Won Supporting Actor', consensusRating: 4.6 },
+      { rank: 32, title: 'Taxi Driver', year: 1976, director: 'Martin Scorsese', genres: ['Crime', 'Drama'], status: 'Nominee', ceremonyOrIssue: '49th Oscars (1977)', accoladeDetail: 'Best Picture Nominee · 4 Nominations', consensusRating: 4.4 },
+      { rank: 33, title: 'Barry Lyndon', year: 1975, director: 'Stanley Kubrick', genres: ['Drama', 'History', 'Romance'], status: 'Nominee', ceremonyOrIssue: '48th Oscars (1976)', accoladeDetail: 'Best Picture Nominee · 4 Wins (Cinematography, Art Direction, Costumes, Score)', consensusRating: 4.5 },
+      { rank: 34, title: 'Chinatown', year: 1974, director: 'Roman Polanski', genres: ['Crime', 'Mystery', 'Thriller'], status: 'Nominee', ceremonyOrIssue: '47th Oscars (1975)', accoladeDetail: 'Best Picture Nominee · 11 Nominations · Won Original Screenplay', consensusRating: 4.5 },
+      { rank: 35, title: 'The Godfather', year: 1972, director: 'Francis Ford Coppola', genres: ['Crime', 'Drama'], status: 'Winner', ceremonyOrIssue: '45th Oscars (1973)', accoladeDetail: 'Best Picture Winner · 3 Wins (Picture, Actor, Adapted Screenplay)', consensusRating: 4.7 },
+      { rank: 36, title: '12 Angry Men', year: 1957, director: 'Sidney Lumet', genres: ['Drama', 'Crime'], status: 'Nominee', ceremonyOrIssue: '30th Oscars (1958)', accoladeDetail: 'Best Picture, Director & Adapted Screenplay Nominee', consensusRating: 4.6 },
+    ],
+  },
+  {
+    id: 'bafta-film-awards',
+    title: 'BAFTA Film Awards — Best Film & International Winners & Nominees',
+    shortName: 'BAFTA Awards',
+    organization: 'British Academy of Film and Television Arts',
+    category: 'awards',
+    description:
+      'BAFTA Best Film, Outstanding British Film, and Film Not in the English Language winners and nominees.',
+    hasWinnerNomineeSplit: true,
+    entries: [
+      { rank: 1, title: 'Conclave', year: 2024, director: 'Edward Berger', genres: ['Thriller', 'Drama', 'Mystery'], status: 'Winner', ceremonyOrIssue: '78th BAFTAs (2025)', accoladeDetail: 'Won Best Film, Outstanding British Film, Adapted Screenplay & Editing', consensusRating: 3.9 },
+      { rank: 2, title: 'The Brutalist', year: 2024, director: 'Brady Corbet', genres: ['Drama', 'History'], status: 'Nominee', ceremonyOrIssue: '78th BAFTAs (2025)', accoladeDetail: 'Best Film Nominee · Won Best Director, Leading Actor, Cinematography & Score', consensusRating: 4.2 },
+      { rank: 3, title: 'Anora', year: 2024, director: 'Sean Baker', genres: ['Drama', 'Comedy', 'Romance'], status: 'Nominee', ceremonyOrIssue: '78th BAFTAs (2025)', accoladeDetail: 'Best Film Nominee · Won Leading Actress & Casting', consensusRating: 4.3 },
+      { rank: 4, title: 'Oppenheimer', year: 2023, director: 'Christopher Nolan', genres: ['Drama', 'History'], status: 'Winner', ceremonyOrIssue: '77th BAFTAs (2024)', accoladeDetail: 'Best Film Winner · 7 BAFTA Wins (incl. Director, Leading Actor)', consensusRating: 4.3 },
+      { rank: 5, title: 'The Zone of Interest', year: 2023, director: 'Jonathan Glazer', genres: ['Drama', 'History'], status: 'Winner', ceremonyOrIssue: '77th BAFTAs (2024)', accoladeDetail: 'Won Outstanding British Film, Film Not in the English Language & Sound', consensusRating: 4.3 },
+      { rank: 6, title: 'Poor Things', year: 2023, director: 'Yorgos Lanthimos', genres: ['Comedy', 'Sci-Fi', 'Romance'], status: 'Nominee', ceremonyOrIssue: '77th BAFTAs (2024)', accoladeDetail: 'Best Film Nominee · 5 BAFTA Wins (incl. Leading Actress, Production Design)', consensusRating: 4.1 },
+      { rank: 7, title: 'Anatomy of a Fall', year: 2023, director: 'Justine Triet', genres: ['Drama', 'Mystery', 'Crime'], status: 'Nominee', ceremonyOrIssue: '77th BAFTAs (2024)', accoladeDetail: 'Best Film Nominee · Won Best Original Screenplay', consensusRating: 4.4 },
+      { rank: 8, title: 'The Banshees of Inisherin', year: 2022, director: 'Martin McDonagh', genres: ['Drama', 'Comedy'], status: 'Winner', ceremonyOrIssue: '76th BAFTAs (2023)', accoladeDetail: 'Won Outstanding British Film, Original Screenplay, Supporting Actor & Actress', consensusRating: 4.1 },
+      { rank: 9, title: 'Aftersun', year: 2022, director: 'Charlotte Wells', genres: ['Drama'], status: 'Winner', ceremonyOrIssue: '76th BAFTAs (2023)', accoladeDetail: 'Won Outstanding Debut by a British Writer, Director or Producer', consensusRating: 4.5 },
+      { rank: 10, title: 'Tár', year: 2022, director: 'Todd Field', genres: ['Drama', 'Music'], status: 'Nominee', ceremonyOrIssue: '76th BAFTAs (2023)', accoladeDetail: 'Best Film Nominee · Won Leading Actress (Cate Blanchett)', consensusRating: 4.2 },
+      { rank: 11, title: 'Drive My Car', year: 2021, director: 'Ryusuke Hamaguchi', genres: ['Drama'], status: 'Winner', ceremonyOrIssue: '75th BAFTAs (2022)', accoladeDetail: 'Won Best Film Not in the English Language', consensusRating: 4.4 },
+      { rank: 12, title: 'Parasite', year: 2019, director: 'Bong Joon-ho', genres: ['Drama', 'Thriller', 'Comedy'], status: 'Winner', ceremonyOrIssue: '73rd BAFTAs (2020)', accoladeDetail: 'Won Original Screenplay & Film Not in the English Language · Best Film Nominee', consensusRating: 4.6 },
+      { rank: 13, title: 'Portrait of a Lady on Fire', year: 2019, director: 'Céline Sciamma', genres: ['Drama', 'Romance', 'History'], status: 'Nominee', ceremonyOrIssue: '73rd BAFTAs (2020)', accoladeDetail: 'Best Film Not in the English Language Nominee', consensusRating: 4.5 },
+      { rank: 14, title: 'The Handmaiden', year: 2016, director: 'Park Chan-wook', genres: ['Thriller', 'Drama', 'Romance'], status: 'Winner', ceremonyOrIssue: '71st BAFTAs (2018)', accoladeDetail: 'Won Best Film Not in the English Language', consensusRating: 4.5 },
+      { rank: 15, title: 'La La Land', year: 2016, director: 'Damien Chazelle', genres: ['Music', 'Romance', 'Drama'], status: 'Winner', ceremonyOrIssue: '70th BAFTAs (2017)', accoladeDetail: 'Best Film Winner · 5 BAFTAs (Film, Director, Actress, Cinematography, Music)', consensusRating: 4.1 },
+      { rank: 16, title: 'Carol', year: 2015, director: 'Todd Haynes', genres: ['Romance', 'Drama'], status: 'Nominee', ceremonyOrIssue: '69th BAFTAs (2016)', accoladeDetail: 'Best Film Nominee · 9 BAFTA Nominations', consensusRating: 4.2 },
+      { rank: 17, title: 'Grand Budapest Hotel', year: 2014, director: 'Wes Anderson', genres: ['Comedy', 'Drama', 'Crime'], status: 'Nominee', ceremonyOrIssue: '68th BAFTAs (2015)', accoladeDetail: 'Best Film Nominee · 11 Nominations · 5 Wins (incl. Original Screenplay)', consensusRating: 4.3 },
+      { rank: 18, title: 'Zodiac', year: 2007, director: 'David Fincher', genres: ['Crime', 'Mystery', 'Thriller'], status: 'Nominee', ceremonyOrIssue: '61st BAFTAs (2008)', accoladeDetail: 'Nominated for David Fincher Direction & Production Design', consensusRating: 4.3 },
+      { rank: 19, title: 'In the Mood for Love', year: 2000, director: 'Wong Kar-wai', genres: ['Drama', 'Romance'], status: 'Nominee', ceremonyOrIssue: '54th BAFTAs (2001)', accoladeDetail: 'Best Film Not in the English Language Nominee', consensusRating: 4.6 },
+      { rank: 20, title: 'GoodFellas', year: 1990, director: 'Martin Scorsese', genres: ['Crime', 'Drama'], status: 'Winner', ceremonyOrIssue: '44th BAFTAs (1991)', accoladeDetail: 'Best Film Winner · 5 BAFTAs (Film, Direction, Adapted Screenplay, Editing, Costumes)', consensusRating: 4.6 },
+    ],
+  },
+  {
+    id: 'golden-globes',
+    title: 'Golden Globe Awards — Best Motion Picture (Drama & Musical/Comedy)',
+    shortName: 'Golden Globes',
+    organization: 'Golden Globes',
+    category: 'awards',
+    description:
+      'Golden Globe winners and nominees across Best Motion Picture – Drama, Musical or Comedy, and Non-English Language Film.',
+    hasWinnerNomineeSplit: true,
+    entries: [
+      { rank: 1, title: 'The Brutalist', year: 2024, director: 'Brady Corbet', genres: ['Drama', 'History'], status: 'Winner', ceremonyOrIssue: '82nd Golden Globes (2025)', accoladeDetail: 'Won Best Motion Picture – Drama, Best Director & Best Actor (Drama)', consensusRating: 4.2 },
+      { rank: 2, title: 'Challengers', year: 2024, director: 'Luca Guadagnino', genres: ['Drama', 'Romance'], status: 'Winner', ceremonyOrIssue: '82nd Golden Globes (2025)', accoladeDetail: 'Best Motion Picture (Musical/Comedy) Nominee · Won Best Original Score', consensusRating: 4.1 },
+      { rank: 3, title: 'The Substance', year: 2024, director: 'Coralie Fargeat', genres: ['Horror', 'Sci-Fi', 'Drama'], status: 'Winner', ceremonyOrIssue: '82nd Golden Globes (2025)', accoladeDetail: 'Best Motion Picture (Musical/Comedy) Nominee · Won Best Actress (Demi Moore)', consensusRating: 4.0 },
+      { rank: 4, title: 'Flow', year: 2024, director: 'Gints Zilbalodis', genres: ['Animation', 'Fantasy'], status: 'Winner', ceremonyOrIssue: '82nd Golden Globes (2025)', accoladeDetail: 'Won Best Motion Picture – Animated', consensusRating: 4.3 },
+      { rank: 5, title: 'Anora', year: 2024, director: 'Sean Baker', genres: ['Drama', 'Comedy', 'Romance'], status: 'Nominee', ceremonyOrIssue: '82nd Golden Globes (2025)', accoladeDetail: '5 Nominations including Best Motion Picture – Musical or Comedy', consensusRating: 4.3 },
+      { rank: 6, title: 'Conclave', year: 2024, director: 'Edward Berger', genres: ['Thriller', 'Drama', 'Mystery'], status: 'Winner', ceremonyOrIssue: '82nd Golden Globes (2025)', accoladeDetail: 'Best Drama Nominee · Won Best Screenplay', consensusRating: 3.9 },
+      { rank: 7, title: 'Oppenheimer', year: 2023, director: 'Christopher Nolan', genres: ['Drama', 'History'], status: 'Winner', ceremonyOrIssue: '81st Golden Globes (2024)', accoladeDetail: 'Won Best Motion Picture – Drama + 4 Globes', consensusRating: 4.3 },
+      { rank: 8, title: 'Poor Things', year: 2023, director: 'Yorgos Lanthimos', genres: ['Comedy', 'Sci-Fi', 'Romance'], status: 'Winner', ceremonyOrIssue: '81st Golden Globes (2024)', accoladeDetail: 'Won Best Motion Picture – Musical or Comedy & Best Actress', consensusRating: 4.1 },
+      { rank: 9, title: 'Anatomy of a Fall', year: 2023, director: 'Justine Triet', genres: ['Drama', 'Mystery', 'Crime'], status: 'Winner', ceremonyOrIssue: '81st Golden Globes (2024)', accoladeDetail: 'Won Best Non-English Language Film & Best Screenplay', consensusRating: 4.4 },
+      { rank: 10, title: 'Past Lives', year: 2023, director: 'Celine Song', genres: ['Drama', 'Romance'], status: 'Nominee', ceremonyOrIssue: '81st Golden Globes (2024)', accoladeDetail: '5 Nominations including Best Motion Picture – Drama & Best Director', consensusRating: 4.3 },
+      { rank: 11, title: 'The Banshees of Inisherin', year: 2022, director: 'Martin McDonagh', genres: ['Drama', 'Comedy'], status: 'Winner', ceremonyOrIssue: '80th Golden Globes (2023)', accoladeDetail: 'Won Best Motion Picture – Musical or Comedy, Actor & Screenplay', consensusRating: 4.1 },
+      { rank: 12, title: 'Decision to Leave', year: 2022, director: 'Park Chan-wook', genres: ['Mystery', 'Romance', 'Thriller'], status: 'Nominee', ceremonyOrIssue: '80th Golden Globes (2023)', accoladeDetail: 'Best Non-English Language Motion Picture Nominee', consensusRating: 4.2 },
+      { rank: 13, title: 'Parasite', year: 2019, director: 'Bong Joon-ho', genres: ['Drama', 'Thriller', 'Comedy'], status: 'Winner', ceremonyOrIssue: '77th Golden Globes (2020)', accoladeDetail: 'Won Best Foreign Language Film · Nominated for Director & Screenplay', consensusRating: 4.6 },
+      { rank: 14, title: 'Lady Bird', year: 2017, director: 'Greta Gerwig', genres: ['Comedy', 'Drama'], status: 'Winner', ceremonyOrIssue: '75th Golden Globes (2018)', accoladeDetail: 'Won Best Motion Picture – Musical or Comedy & Best Actress', consensusRating: 4.0 },
+      { rank: 15, title: 'Moonlight', year: 2016, director: 'Barry Jenkins', genres: ['Drama'], status: 'Winner', ceremonyOrIssue: '74th Golden Globes (2017)', accoladeDetail: 'Won Best Motion Picture – Drama', consensusRating: 4.4 },
+      { rank: 16, title: 'La La Land', year: 2016, director: 'Damien Chazelle', genres: ['Music', 'Romance', 'Drama'], status: 'Winner', ceremonyOrIssue: '74th Golden Globes (2017)', accoladeDetail: 'All-Time Record 7/7 Golden Globe Sweep', consensusRating: 4.1 },
+      { rank: 17, title: 'The Social Network', year: 2010, director: 'David Fincher', genres: ['Drama', 'History'], status: 'Winner', ceremonyOrIssue: '68th Golden Globes (2011)', accoladeDetail: 'Won Best Motion Picture – Drama, Director, Screenplay & Score', consensusRating: 4.3 },
+      { rank: 18, title: 'Chinatown', year: 1974, director: 'Roman Polanski', genres: ['Crime', 'Mystery', 'Thriller'], status: 'Winner', ceremonyOrIssue: '32nd Golden Globes (1975)', accoladeDetail: 'Won Best Motion Picture – Drama, Director, Actor & Screenplay', consensusRating: 4.5 },
+    ],
+  },
+  {
+    id: 'guild-awards-pga-dga-sag',
+    title: 'Guild Awards Circuit (PGA / DGA / SAG Ensemble) — Winners & Nominees',
+    shortName: 'SAG / DGA / PGA Guilds',
+    organization: 'DGA · PGA · SAG-AFTRA',
+    category: 'awards',
+    description:
+      'Films honored by the Directors Guild of America (DGA), Producers Guild of America (PGA Darryl F. Zanuck Award), and Screen Actors Guild (SAG Outstanding Cast Ensemble).',
+    hasWinnerNomineeSplit: true,
+    entries: [
+      { rank: 1, title: 'Anora', year: 2024, director: 'Sean Baker', genres: ['Drama', 'Comedy', 'Romance'], status: 'Winner', ceremonyOrIssue: '2025 Guild Season', accoladeDetail: 'Won Both DGA Award (Sean Baker) & PGA Darryl F. Zanuck Award + SAG Cast Nominee', consensusRating: 4.3 },
+      { rank: 2, title: 'Conclave', year: 2024, director: 'Edward Berger', genres: ['Thriller', 'Drama', 'Mystery'], status: 'Winner', ceremonyOrIssue: '2025 Guild Season', accoladeDetail: 'Won SAG Award for Outstanding Cast in a Motion Picture + DGA & PGA Nominee', consensusRating: 3.9 },
+      { rank: 3, title: 'The Brutalist', year: 2024, director: 'Brady Corbet', genres: ['Drama', 'History'], status: 'Nominee', ceremonyOrIssue: '2025 Guild Season', accoladeDetail: 'DGA Outstanding Directorial Achievement & PGA Best Picture Nominee', consensusRating: 4.2 },
+      { rank: 4, title: 'Dune: Part Two', year: 2024, director: 'Denis Villeneuve', genres: ['Sci-Fi', 'Action', 'Drama'], status: 'Nominee', ceremonyOrIssue: '2025 Guild Season', accoladeDetail: 'DGA & PGA Best Theatrical Motion Picture Nominee', consensusRating: 4.5 },
+      { rank: 5, title: 'Oppenheimer', year: 2023, director: 'Christopher Nolan', genres: ['Drama', 'History'], status: 'Winner', ceremonyOrIssue: '2024 Guild Season', accoladeDetail: 'Triple Guild Sweep: Won PGA Best Picture, DGA Award & SAG Cast Ensemble', consensusRating: 4.3 },
+      { rank: 6, title: 'Everything Everywhere All at Once', year: 2022, director: 'Daniel Kwan, Daniel Scheinert', genres: ['Sci-Fi', 'Action', 'Comedy'], status: 'Winner', ceremonyOrIssue: '2023 Guild Season', accoladeDetail: 'Triple Guild Sweep: Won PGA, DGA & SAG Cast + 3 Individual SAG Wins', consensusRating: 4.3 },
+      { rank: 7, title: 'Parasite', year: 2019, director: 'Bong Joon-ho', genres: ['Drama', 'Thriller', 'Comedy'], status: 'Winner', ceremonyOrIssue: '2020 Guild Season', accoladeDetail: 'Historic SAG Award Winner for Outstanding Cast + DGA & PGA Nominee', consensusRating: 4.6 },
+      { rank: 8, title: 'Get Out', year: 2017, director: 'Jordan Peele', genres: ['Horror', 'Thriller', 'Mystery'], status: 'Winner', ceremonyOrIssue: '2018 Guild Season', accoladeDetail: 'Won DGA First-Time Feature Award + PGA, DGA & SAG Ensemble Nominee', consensusRating: 4.2 },
+      { rank: 9, title: 'La La Land', year: 2016, director: 'Damien Chazelle', genres: ['Music', 'Romance', 'Drama'], status: 'Winner', ceremonyOrIssue: '2017 Guild Season', accoladeDetail: 'Won Both PGA Best Picture & DGA Outstanding Directorial Achievement', consensusRating: 4.1 },
+      { rank: 10, title: 'Moonlight', year: 2016, director: 'Barry Jenkins', genres: ['Drama'], status: 'Nominee', ceremonyOrIssue: '2017 Guild Season', accoladeDetail: 'Nominated for PGA, DGA & SAG Cast Ensemble (Won SAG Supporting Actor)', consensusRating: 4.4 },
+      { rank: 11, title: 'No Country for Old Men', year: 2007, director: 'Joel & Ethan Coen', genres: ['Crime', 'Thriller', 'Drama'], status: 'Winner', ceremonyOrIssue: '2008 Guild Season', accoladeDetail: 'Triple Guild Sweep: Won PGA, DGA & SAG Ensemble', consensusRating: 4.5 },
+      { rank: 12, title: 'There Will Be Blood', year: 2007, director: 'Paul Thomas Anderson', genres: ['Drama', 'History'], status: 'Nominee', ceremonyOrIssue: '2008 Guild Season', accoladeDetail: 'DGA & PGA Nominee · Won SAG Best Male Actor (Daniel Day-Lewis)', consensusRating: 4.6 },
+      { rank: 13, title: 'Zodiac', year: 2007, director: 'David Fincher', genres: ['Crime', 'Mystery', 'Thriller'], status: 'Nominee', ceremonyOrIssue: '2008 Guild Season', accoladeDetail: 'WGA & Guild Circuit Nominee', consensusRating: 4.3 },
+    ],
+  },
+  {
+    id: 'sight-and-sound-top-100',
+    title: 'Sight & Sound — Greatest Films of All Time Critics Poll',
+    shortName: 'Sight & Sound Poll',
+    organization: 'British Film Institute (BFI)',
+    category: 'critics_poll',
+    description:
+      'The decennial British Film Institute Sight & Sound international critics and directors poll of the greatest films ever made.',
+    hasWinnerNomineeSplit: false,
+    entries: [
+      { rank: 2, title: 'Vertigo', year: 1958, director: 'Alfred Hitchcock', genres: ['Mystery', 'Romance', 'Thriller'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #2 All-Time (2022) · Ranked #1 All-Time (2012)', consensusRating: 4.6 },
+      { rank: 5, title: 'In the Mood for Love', year: 2000, director: 'Wong Kar-wai', genres: ['Drama', 'Romance'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #5 Greatest Film of All Time (Highest 21st-Century Entry)', consensusRating: 4.6 },
+      { rank: 6, title: '2001: A Space Odyssey', year: 1968, director: 'Stanley Kubrick', genres: ['Sci-Fi', 'Mystery'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #6 in Critics Poll · Ranked #1 in Directors Poll', consensusRating: 4.6 },
+      { rank: 7, title: 'Beau Travail', year: 1999, director: 'Claire Denis', genres: ['Drama'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #7 Greatest Film of All Time', consensusRating: 4.4 },
+      { rank: 8, title: 'Mulholland Drive', year: 2001, director: 'David Lynch', genres: ['Mystery', 'Thriller', 'Drama'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #8 Greatest Film of All Time', consensusRating: 4.5 },
+      { rank: 12, title: 'The Godfather', year: 1972, director: 'Francis Ford Coppola', genres: ['Crime', 'Drama'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #12 in Critics Poll · #3 in Directors Poll', consensusRating: 4.7 },
+      { rank: 20, title: 'Seven Samurai', year: 1954, director: 'Akira Kurosawa', genres: ['Action', 'Drama', 'History'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #20 Greatest Film of All Time', consensusRating: 4.7 },
+      { rank: 29, title: 'Taxi Driver', year: 1976, director: 'Martin Scorsese', genres: ['Crime', 'Drama'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #29 in Critics Poll', consensusRating: 4.4 },
+      { rank: 30, title: 'Portrait of a Lady on Fire', year: 2019, director: 'Céline Sciamma', genres: ['Drama', 'Romance', 'History'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #30 Greatest Film of All Time', consensusRating: 4.5 },
+      { rank: 38, title: 'Do the Right Thing', year: 1989, director: 'Spike Lee', genres: ['Drama', 'Comedy'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #38 Greatest Film of All Time', consensusRating: 4.5 },
+      { rank: 43, title: 'Stalker', year: 1979, director: 'Andrei Tarkovsky', genres: ['Sci-Fi', 'Drama'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #43 Greatest Film of All Time', consensusRating: 4.5 },
+      { rank: 45, title: 'Barry Lyndon', year: 1975, director: 'Stanley Kubrick', genres: ['Drama', 'History', 'Romance'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #45 in Critics Poll · #12 in Directors Poll', consensusRating: 4.5 },
+      { rank: 54, title: 'Blade Runner 2049', year: 2017, director: 'Denis Villeneuve', genres: ['Sci-Fi', 'Drama', 'Mystery'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Extended Poll', accoladeDetail: 'Modern Sci-Fi Critics Canon Selection', consensusRating: 4.3 },
+      { rank: 63, title: 'GoodFellas', year: 1990, director: 'Martin Scorsese', genres: ['Crime', 'Drama'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #63 in Critics Poll', consensusRating: 4.6 },
+      { rank: 67, title: 'Moonlight', year: 2016, director: 'Barry Jenkins', genres: ['Drama'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #67 Greatest Film of All Time', consensusRating: 4.4 },
+      { rank: 72, title: 'Persona', year: 1966, director: 'Ingmar Bergman', genres: ['Drama', 'Mystery'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #72 Greatest Film of All Time', consensusRating: 4.5 },
+      { rank: 75, title: 'Spirited Away', year: 2001, director: 'Hayao Miyazaki', genres: ['Animation', 'Fantasy'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #75 Greatest Film of All Time', consensusRating: 4.6 },
+      { rank: 84, title: 'Blue Velvet', year: 1986, director: 'David Lynch', genres: ['Mystery', 'Thriller', 'Crime'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #84 Greatest Film of All Time', consensusRating: 4.3 },
+      { rank: 88, title: 'Chungking Express', year: 1994, director: 'Wong Kar-wai', genres: ['Drama', 'Romance', 'Comedy'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #88 Greatest Film of All Time', consensusRating: 4.4 },
+      { rank: 90, title: 'Parasite', year: 2019, director: 'Bong Joon-ho', genres: ['Drama', 'Thriller', 'Comedy'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #90 Greatest Film of All Time', consensusRating: 4.6 },
+      { rank: 92, title: 'Yi Yi', year: 2000, director: 'Edward Yang', genres: ['Drama', 'Romance'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #90 (Tie) Greatest Film of All Time', consensusRating: 4.6 },
+      { rank: 95, title: 'Get Out', year: 2017, director: 'Jordan Peele', genres: ['Horror', 'Thriller', 'Mystery'], status: 'Ranked', ceremonyOrIssue: 'Sight & Sound Decennial Poll', accoladeDetail: 'Ranked #95 Greatest Film of All Time', consensusRating: 4.2 },
+    ],
+  },
+  {
+    id: 'empire-annual-best',
+    title: 'Empire Magazine — Annual "Best Films of the Year" Editorial Rankings',
+    shortName: 'Empire Magazine',
+    organization: 'Empire (UK)',
+    category: 'periodical',
+    description:
+      'Empire Magazine’s year-end #1 winners and top-ranked releases from their annual "Films of the Year" editorial countdowns.',
+    hasWinnerNomineeSplit: false,
+    entries: [
+      { rank: 1, title: 'Dune: Part Two', year: 2024, director: 'Denis Villeneuve', genres: ['Sci-Fi', 'Action', 'Drama'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2024', accoladeDetail: 'Empire #1 Film of the Year (2024)', consensusRating: 4.5 },
+      { rank: 2, title: 'The Substance', year: 2024, director: 'Coralie Fargeat', genres: ['Horror', 'Sci-Fi', 'Drama'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2024', accoladeDetail: 'Empire #2 Film of the Year (2024)', consensusRating: 4.0 },
+      { rank: 3, title: 'Anora', year: 2024, director: 'Sean Baker', genres: ['Drama', 'Comedy', 'Romance'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2024', accoladeDetail: 'Empire #3 Film of the Year (2024)', consensusRating: 4.3 },
+      { rank: 4, title: 'Challengers', year: 2024, director: 'Luca Guadagnino', genres: ['Drama', 'Romance'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2024', accoladeDetail: 'Empire #4 Film of the Year (2024)', consensusRating: 4.1 },
+      { rank: 5, title: 'Civil War', year: 2024, director: 'Alex Garland', genres: ['Action', 'Thriller', 'Drama'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2024', accoladeDetail: 'Empire Top 10 Film of the Year (2024)', consensusRating: 3.7 },
+      { rank: 6, title: 'Furiosa: A Mad Max Saga', year: 2024, director: 'George Miller', genres: ['Action', 'Sci-Fi'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2024', accoladeDetail: 'Empire Top 10 Film of the Year (2024)', consensusRating: 4.0 },
+      { rank: 7, title: 'Oppenheimer', year: 2023, director: 'Christopher Nolan', genres: ['Drama', 'History'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2023', accoladeDetail: 'Empire #1 Film of the Year (2023)', consensusRating: 4.3 },
+      { rank: 8, title: 'Past Lives', year: 2023, director: 'Celine Song', genres: ['Drama', 'Romance'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2023', accoladeDetail: 'Empire #2 Film of the Year (2023)', consensusRating: 4.3 },
+      { rank: 9, title: 'Anatomy of a Fall', year: 2023, director: 'Justine Triet', genres: ['Drama', 'Mystery', 'Crime'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2023', accoladeDetail: 'Empire Top 5 Film of the Year (2023)', consensusRating: 4.4 },
+      { rank: 10, title: 'Everything Everywhere All at Once', year: 2022, director: 'Daniel Kwan, Daniel Scheinert', genres: ['Sci-Fi', 'Action', 'Comedy'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2022', accoladeDetail: 'Empire #1 Film of the Year (2022)', consensusRating: 4.3 },
+      { rank: 11, title: 'Aftersun', year: 2022, director: 'Charlotte Wells', genres: ['Drama'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2022', accoladeDetail: 'Empire #3 Film of the Year (2022)', consensusRating: 4.5 },
+      { rank: 12, title: 'Nope', year: 2022, director: 'Jordan Peele', genres: ['Horror', 'Sci-Fi', 'Mystery'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2022', accoladeDetail: 'Empire Top 10 Film of the Year (2022)', consensusRating: 3.9 },
+      { rank: 13, title: 'Parasite', year: 2019, director: 'Bong Joon-ho', genres: ['Drama', 'Thriller', 'Comedy'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2020 UK', accoladeDetail: 'Empire #1 Film of the Year', consensusRating: 4.6 },
+      { rank: 14, title: 'Spider-Man: Into the Spider-Verse', year: 2018, director: 'Bob Persichetti, Peter Ramsey, Rodney Rothman', genres: ['Animation', 'Action', 'Sci-Fi'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2018', accoladeDetail: 'Empire Top 3 Film of the Year', consensusRating: 4.5 },
+      { rank: 15, title: 'Get Out', year: 2017, director: 'Jordan Peele', genres: ['Horror', 'Thriller', 'Mystery'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2017', accoladeDetail: 'Empire #1 Film of the Year (2017)', consensusRating: 4.2 },
+      { rank: 16, title: 'Blade Runner 2049', year: 2017, director: 'Denis Villeneuve', genres: ['Sci-Fi', 'Drama', 'Mystery'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2017', accoladeDetail: 'Empire #2 Film of the Year (2017)', consensusRating: 4.3 },
+      { rank: 17, title: 'Mad Max: Fury Road', year: 2015, director: 'George Miller', genres: ['Action', 'Sci-Fi', 'Thriller'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2015', accoladeDetail: 'Empire #1 Film of the Year & #1 of the Century Poll', consensusRating: 4.4 },
+      { rank: 18, title: 'Drive', year: 2011, director: 'Nicolas Winding Refn', genres: ['Crime', 'Thriller', 'Action'], status: 'Ranked', ceremonyOrIssue: 'Empire Best Films of 2011', accoladeDetail: 'Empire #1 Film of the Year (2011)', consensusRating: 4.1 },
+    ],
+  },
+  {
+    id: 'entertainment-weekly-annual',
+    title: 'Entertainment Weekly — Annual "Best Movies of the Year" Critics Lists',
+    shortName: 'Entertainment Weekly',
+    organization: 'Entertainment Weekly (EW)',
+    category: 'periodical',
+    description:
+      'Entertainment Weekly’s annual Top 10 best movies of the year and modern American periodical essentials.',
+    hasWinnerNomineeSplit: false,
+    entries: [
+      { rank: 1, title: 'Anora', year: 2024, director: 'Sean Baker', genres: ['Drama', 'Comedy', 'Romance'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2024', accoladeDetail: 'EW #1 Best Movie of 2024', consensusRating: 4.3 },
+      { rank: 2, title: 'Challengers', year: 2024, director: 'Luca Guadagnino', genres: ['Drama', 'Romance'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2024', accoladeDetail: 'EW #2 Best Movie of 2024', consensusRating: 4.1 },
+      { rank: 3, title: 'I Saw the TV Glow', year: 2024, director: 'Jane Schoenbrun', genres: ['Drama', 'Horror', 'Fantasy'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2024', accoladeDetail: 'EW Top 5 Best Movie of 2024', consensusRating: 3.9 },
+      { rank: 4, title: 'Conclave', year: 2024, director: 'Edward Berger', genres: ['Thriller', 'Drama', 'Mystery'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2024', accoladeDetail: 'EW Top 10 Best Movie of 2024', consensusRating: 3.9 },
+      { rank: 5, title: 'Sinners', year: 2025, director: 'Ryan Coogler', genres: ['Horror', 'Thriller', 'Drama'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2025', accoladeDetail: 'EW Critics #1 Mid-Year & Year-End Selection', consensusRating: 4.2 },
+      { rank: 6, title: 'Past Lives', year: 2023, director: 'Celine Song', genres: ['Drama', 'Romance'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2023', accoladeDetail: 'EW #1 Best Movie of 2023', consensusRating: 4.3 },
+      { rank: 7, title: 'Oppenheimer', year: 2023, director: 'Christopher Nolan', genres: ['Drama', 'History'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2023', accoladeDetail: 'EW #2 Best Movie of 2023', consensusRating: 4.3 },
+      { rank: 8, title: 'Poor Things', year: 2023, director: 'Yorgos Lanthimos', genres: ['Comedy', 'Sci-Fi', 'Romance'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2023', accoladeDetail: 'EW Top 5 Best Movie of 2023', consensusRating: 4.1 },
+      { rank: 9, title: 'Tár', year: 2022, director: 'Todd Field', genres: ['Drama', 'Music'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2022', accoladeDetail: 'EW #1 Best Movie of 2022', consensusRating: 4.2 },
+      { rank: 10, title: 'Everything Everywhere All at Once', year: 2022, director: 'Daniel Kwan, Daniel Scheinert', genres: ['Sci-Fi', 'Action', 'Comedy'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2022', accoladeDetail: 'EW #2 Best Movie of 2022', consensusRating: 4.3 },
+      { rank: 11, title: 'The Worst Person in the World', year: 2021, director: 'Joachim Trier', genres: ['Drama', 'Romance', 'Comedy'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2021', accoladeDetail: 'EW Top 5 Best Movie of the Year', consensusRating: 4.2 },
+      { rank: 12, title: 'Uncut Gems', year: 2019, director: 'Josh & Benny Safdie', genres: ['Crime', 'Thriller', 'Drama'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2019', accoladeDetail: 'EW Top 3 Best Movie of 2019', consensusRating: 4.1 },
+      { rank: 13, title: 'Hereditary', year: 2018, director: 'Ari Aster', genres: ['Horror', 'Drama', 'Mystery'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2018', accoladeDetail: 'EW Top 5 Best Movie of 2018', consensusRating: 4.1 },
+      { rank: 14, title: 'Lady Bird', year: 2017, director: 'Greta Gerwig', genres: ['Comedy', 'Drama'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2017', accoladeDetail: 'EW #1 Best Movie of 2017', consensusRating: 4.0 },
+      { rank: 15, title: 'Moonlight', year: 2016, director: 'Barry Jenkins', genres: ['Drama'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2016', accoladeDetail: 'EW #1 Best Movie of 2016', consensusRating: 4.4 },
+      { rank: 16, title: 'The Social Network', year: 2010, director: 'David Fincher', genres: ['Drama', 'History'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2010', accoladeDetail: 'EW #1 Best Movie of 2010 & #1 of the Decade', consensusRating: 4.3 },
+      { rank: 17, title: 'Eternal Sunshine of the Spotless Mind', year: 2004, director: 'Michel Gondry', genres: ['Sci-Fi', 'Drama', 'Romance'], status: 'Ranked', ceremonyOrIssue: 'EW Best Movies of 2004', accoladeDetail: 'EW Top 3 Best Movie of 2004', consensusRating: 4.4 },
+      { rank: 18, title: 'Pulp Fiction', year: 1994, director: 'Quentin Tarantino', genres: ['Crime', 'Thriller', 'Comedy'], status: 'Ranked', ceremonyOrIssue: 'EW New Classics #1', accoladeDetail: 'EW #1 Film of the Modern Era (1983–2008 Poll)', consensusRating: 4.5 },
+    ],
+  },
+];
