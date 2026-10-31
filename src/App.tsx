@@ -2,8 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeftRight,
   BarChart3,
+  Compass,
   Database,
   ExternalLink,
+  GitCompare,
   Table2,
   Trophy,
   UserCheck,
@@ -12,13 +14,24 @@ import { INITIAL_PROFILES } from './data/filmCatalog';
 import { FilmEntry, ProfileAccount } from './types/letterboxd';
 import { SpreadsheetView } from './components/SpreadsheetView';
 import { AnalyticsView } from './components/AnalyticsView';
+import { RecommendationsView } from './components/RecommendationsView';
 import { ComparisonView } from './components/ComparisonView';
 import { ExternalListsView } from './components/ExternalListsView';
 import { DataSourcesView } from './components/DataSourcesView';
+import { ChangesSummaryView } from './components/ChangesSummaryView';
+import { FilmGroupCohort } from './components/GroupHistogramPanel';
+import { cloneFilmsArray, computeProfileDeviations } from './utils/baselineDiff';
 
-type WorkspaceTab = 'spreadsheet' | 'analytics' | 'compare' | 'awards_lists' | 'sources';
+type WorkspaceTab =
+  | 'spreadsheet'
+  | 'analytics'
+  | 'recommendations'
+  | 'compare'
+  | 'awards_lists'
+  | 'sources'
+  | 'changes';
 
-const STORAGE_KEY = 'framesheet_letterboxd_profiles_v3';
+const STORAGE_KEY = 'framesheet_letterboxd_profiles_v5';
 
 export default function App() {
   const [profiles, setProfiles] = useState<ProfileAccount[]>(() => {
@@ -27,7 +40,13 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.map((p: ProfileAccount) => ({
+            ...p,
+            baselineFilms:
+              p.baselineFilms && p.baselineFilms.length > 0
+                ? p.baselineFilms
+                : cloneFilmsArray(p.films || []),
+          }));
         }
       }
     } catch {
@@ -45,6 +64,28 @@ export default function App() {
   });
 
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('spreadsheet');
+  const [pendingInspectFilmId, setPendingInspectFilmId] = useState<string | null>(
+    null
+  );
+  const [activeAnalyticsCohort, setActiveAnalyticsCohort] =
+    useState<FilmGroupCohort | null>(null);
+  const [savedCohorts, setSavedCohorts] = useState<FilmGroupCohort[]>([]);
+
+  const handleSaveCohort = (name: string, films: FilmEntry[]) => {
+    const newCohort: FilmGroupCohort = {
+      id: `saved-group-${Date.now()}`,
+      label: name,
+      description: `${films.length.toLocaleString()} films saved from @${activeProfile?.username || 'profile'}`,
+      sourceType: 'saved_group',
+      films,
+    };
+    setSavedCohorts((prev) => [newCohort, ...prev]);
+  };
+
+  const handleDeleteSavedCohort = (id: string) => {
+    setSavedCohorts((prev) => prev.filter((c) => c.id !== id));
+    setActiveAnalyticsCohort((prev) => (prev?.id === id ? null : prev));
+  };
 
   useEffect(() => {
     try {
@@ -67,6 +108,20 @@ export default function App() {
               ...p,
               films: updatedFilms,
               lastSyncedAt: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC',
+            }
+          : p
+      )
+    );
+  };
+
+  const handleUpdateDismissedRecommendations = (dismissedSlugs: string[]) => {
+    if (!activeProfile) return;
+    setProfiles((prev) =>
+      prev.map((p) =>
+        p.id === activeProfile.id
+          ? {
+              ...p,
+              dismissedRecommendations: dismissedSlugs,
             }
           : p
       )
@@ -130,6 +185,11 @@ export default function App() {
     const topGenre =
       Array.from(genreCounts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
 
+    const devSummary = computeProfileDeviations(
+      activeProfile.baselineFilms,
+      activeProfile.films
+    );
+
     return {
       loggedCount: loggedFilms.length,
       watchlistCount: watchlistFilms.length,
@@ -137,6 +197,7 @@ export default function App() {
       meanRating: mean,
       sTierCount,
       topGenre,
+      deviationCount: devSummary.totalDeviationCount,
     };
   }, [activeProfile]);
 
@@ -187,6 +248,20 @@ export default function App() {
             Analytics
           </a>
           <a
+            href="#recommendations"
+            onClick={(e) => {
+              e.preventDefault();
+              setActiveTab('recommendations');
+            }}
+            className={`py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 ${
+              activeTab === 'recommendations'
+                ? 'text-slate-100 border-amber-400'
+                : 'border-transparent hover:text-slate-200'
+            }`}
+          >
+            Recommendations
+          </a>
+          <a
             href="#compare"
             onClick={(e) => {
               e.preventDefault();
@@ -228,6 +303,25 @@ export default function App() {
           >
             Data Sources
           </a>
+          <a
+            href="#changes"
+            onClick={(e) => {
+              e.preventDefault();
+              setActiveTab('changes');
+            }}
+            className={`py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 inline-flex items-center gap-1.5 ${
+              activeTab === 'changes'
+                ? 'text-slate-100 border-amber-400'
+                : 'border-transparent hover:text-slate-200'
+            }`}
+          >
+            <span>Summary of Changes</span>
+            {(activeSummary.deviationCount ?? 0) > 0 && (
+              <span className="px-1.5 py-0.2 text-[11px] font-mono tabular-nums rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                {activeSummary.deviationCount}
+              </span>
+            )}
+          </a>
         </nav>
 
         {/* Zone 3: 1 primary action */}
@@ -248,7 +342,7 @@ export default function App() {
         <aside className="w-full lg:w-[260px] shrink-0 border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900/40 p-4 flex flex-col justify-between gap-6">
           <div className="space-y-6">
             {/* Mobile Navigation Switcher */}
-            <div className="grid grid-cols-5 gap-1 p-1 bg-slate-900 border border-slate-800 rounded-lg md:hidden">
+            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-900 border border-slate-800 rounded-lg md:hidden">
               <button
                 type="button"
                 onClick={() => setActiveTab('spreadsheet')}
@@ -270,6 +364,17 @@ export default function App() {
                 }`}
               >
                 Charts
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('recommendations')}
+                className={`py-1.5 text-xs font-medium rounded whitespace-nowrap ${
+                  activeTab === 'recommendations'
+                    ? 'bg-slate-800 text-amber-400'
+                    : 'text-slate-400'
+                }`}
+              >
+                For You
               </button>
               <button
                 type="button"
@@ -302,7 +407,18 @@ export default function App() {
                     : 'text-slate-400'
                 }`}
               >
-                Import
+                Sources
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('changes')}
+                className={`py-1.5 text-xs font-medium rounded whitespace-nowrap font-mono tabular-nums ${
+                  activeTab === 'changes'
+                    ? 'bg-slate-800 text-amber-400'
+                    : 'text-slate-400'
+                }`}
+              >
+                Changes ({activeSummary.deviationCount ?? 0})
               </button>
             </div>
 
@@ -386,6 +502,26 @@ export default function App() {
                     <span className="text-slate-400">Primary Genre</span>
                     <span className="text-slate-200">{activeSummary.topGenre}</span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('changes')}
+                    className="w-full flex items-center justify-between pt-1.5 border-t border-slate-800/60 hover:text-amber-300 transition-colors text-left"
+                  >
+                    <span className="text-slate-400 hover:text-slate-200">
+                      Edits vs. LB Truth
+                    </span>
+                    <span
+                      className={`font-mono tabular-nums font-semibold underline ${
+                        (activeSummary.deviationCount ?? 0) > 0
+                          ? 'text-amber-400'
+                          : 'text-emerald-400'
+                      }`}
+                    >
+                      {(activeSummary.deviationCount ?? 0) > 0
+                        ? `${activeSummary.deviationCount} changed`
+                        : '0 (Synced)'}
+                    </span>
+                  </button>
                 </div>
               </div>
             )}
@@ -446,6 +582,18 @@ export default function App() {
             </button>
             <button
               type="button"
+              onClick={() => setActiveTab('recommendations')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors ${
+                activeTab === 'recommendations'
+                  ? 'bg-slate-800 text-amber-400'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Compass className="w-4 h-4" />
+              <span>Recommendations Engine</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab('compare')}
               className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-md transition-colors ${
                 activeTab === 'compare'
@@ -478,7 +626,30 @@ export default function App() {
               }`}
             >
               <Database className="w-4 h-4" />
-              <span>External Scrape & CSV</span>
+              <span>Data Sources</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('changes')}
+              className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-medium rounded-md transition-colors ${
+                activeTab === 'changes'
+                  ? 'bg-slate-800 text-amber-400'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span className="flex items-center gap-2.5 truncate">
+                <GitCompare className="w-4 h-4 shrink-0" />
+                <span className="truncate">Summary of Changes</span>
+              </span>
+              <span
+                className={`text-[11px] font-mono tabular-nums px-1.5 py-0.5 rounded shrink-0 ${
+                  (activeSummary.deviationCount ?? 0) > 0
+                    ? 'bg-amber-500/20 text-amber-300'
+                    : 'bg-slate-900 text-slate-500'
+                }`}
+              >
+                {activeSummary.deviationCount ?? 0}
+              </span>
             </button>
           </div>
         </aside>
@@ -518,19 +689,24 @@ export default function App() {
                     `${activeProfile.displayName} — Film Ranking & Diary Spreadsheet`}
                   {activeTab === 'analytics' &&
                     `${activeProfile.displayName} — Viewing History & Rating Analytics`}
+                  {activeTab === 'recommendations' &&
+                    `${activeProfile.displayName} — Personal Film Recommendations & Affinity Engine`}
                   {activeTab === 'compare' &&
                     'Two-Profile Contrast, Shared Movies & Genre Divergence'}
                   {activeTab === 'awards_lists' &&
                     `${activeProfile.displayName} — Industry Awards, Critic Polls & Periodicals`}
                   {activeTab === 'sources' &&
                     'External Letterboxd Account Scraper & CSV Import Center'}
+                  {activeTab === 'changes' &&
+                    `${activeProfile.displayName} — Summary of Changes vs. Letterboxd Source of Truth`}
                 </h1>
               </div>
 
               {activeProfile.bio &&
                 activeTab !== 'compare' &&
                 activeTab !== 'awards_lists' &&
-                activeTab !== 'sources' && (
+                activeTab !== 'sources' &&
+                activeTab !== 'changes' && (
                   <p className="text-xs text-slate-400 max-w-md">{activeProfile.bio}</p>
                 )}
             </div>
@@ -542,11 +718,34 @@ export default function App() {
               profile={activeProfile}
               onUpdateFilms={handleUpdateActiveFilms}
               onOpenImport={() => setActiveTab('sources')}
+              onOpenChangesSummary={() => setActiveTab('changes')}
+              onOpenCohortInAnalytics={(cohort) => {
+                setActiveAnalyticsCohort(cohort);
+                setActiveTab('analytics');
+              }}
+              onSaveCohort={handleSaveCohort}
+              initialInspectedFilmId={pendingInspectFilmId}
+              onClearInitialInspectedFilm={() => setPendingInspectFilmId(null)}
             />
           )}
 
           {activeTab === 'analytics' && activeProfile && (
-            <AnalyticsView profile={activeProfile} />
+            <AnalyticsView
+              profile={activeProfile}
+              activeCohort={activeAnalyticsCohort}
+              savedCohorts={savedCohorts}
+              onSelectCohort={setActiveAnalyticsCohort}
+              onSaveCohort={handleSaveCohort}
+              onDeleteSavedCohort={handleDeleteSavedCohort}
+            />
+          )}
+
+          {activeTab === 'recommendations' && activeProfile && (
+            <RecommendationsView
+              profile={activeProfile}
+              onUpdateFilms={handleUpdateActiveFilms}
+              onUpdateDismissedRecommendations={handleUpdateDismissedRecommendations}
+            />
           )}
 
           {activeTab === 'compare' && (
@@ -575,6 +774,19 @@ export default function App() {
               onDeleteProfile={handleDeleteProfile}
               onSelectActiveProfile={(id) => {
                 setActiveProfileId(id);
+                setActiveTab('spreadsheet');
+              }}
+            />
+          )}
+
+          {activeTab === 'changes' && activeProfile && (
+            <ChangesSummaryView
+              profile={activeProfile}
+              onUpdateFilms={handleUpdateActiveFilms}
+              onOpenInSpreadsheet={(filmId) => {
+                if (filmId) {
+                  setPendingInspectFilmId(filmId);
+                }
                 setActiveTab('spreadsheet');
               }}
             />

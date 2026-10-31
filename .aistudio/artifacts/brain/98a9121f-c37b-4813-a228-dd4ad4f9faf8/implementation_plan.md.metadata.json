@@ -1,0 +1,6 @@
+{
+  "summary":  "Implementation plan for the FrameSheet Recommendation Engine, covering multi-factor rating & diary affinity analysis (Director Rating Bias, Screenwriter Frequency, Sub-Genre Volume & Affinity, and Release Decade Bias), Watchlist badge integration, one-click Add to Watchlist action, and persistent Remove from Consideration controls with a restore drawer.",
+  "updatedAt":  "2026-10-31T08:16:56.525735365Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

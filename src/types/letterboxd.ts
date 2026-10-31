@@ -23,6 +23,22 @@ export interface FilmEntry {
   posterUrl?: string;
 }
 
+export type LetterboxdCsvPreset =
+  | 'diary'
+  | 'reviews'
+  | 'ratings'
+  | 'watched'
+  | 'watchlist'
+  | 'custom';
+
+export interface ImportedCsvStructure {
+  preset: LetterboxdCsvPreset;
+  headers: string[];
+  filename: string;
+  dateOrder: 'asc' | 'desc';
+  useFixedOneDecimalRating: boolean;
+}
+
 export interface ProfileAccount {
   id: string;
   username: string;
@@ -32,6 +48,9 @@ export interface ProfileAccount {
   profileUrl: string;
   bio?: string;
   films: FilmEntry[];
+  baselineFilms?: FilmEntry[];
+  importedCsvStructure?: ImportedCsvStructure;
+  dismissedRecommendations?: string[]; // Slugs of films removed from consideration in Recommendations
 }
 
 export interface CatalogFilmMeta {

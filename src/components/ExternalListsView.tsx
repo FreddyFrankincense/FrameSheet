@@ -789,17 +789,18 @@ export const ExternalListsView: React.FC<ExternalListsViewProps> = ({
 
                   {/* Watched + Winner/Nominee Status */}
                   <td className="px-3 py-1.5">
-                    <div className="flex items-center gap-1.5">
+                    <div
+                      className="flex items-center gap-1.5"
+                      title={
+                        watched
+                          ? 'Logged in your profile'
+                          : 'Not yet logged in your profile'
+                      }
+                    >
                       {watched ? (
-                        <CheckCircle2
-                          className="w-3.5 h-3.5 text-emerald-400 shrink-0"
-                          title="Logged in your profile"
-                        />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       ) : (
-                        <Circle
-                          className="w-3.5 h-3.5 text-slate-600 shrink-0"
-                          title="Not yet logged in your profile"
-                        />
+                        <Circle className="w-3.5 h-3.5 text-slate-600 shrink-0" />
                       )}
                       <span
                         className={`font-medium whitespace-nowrap ${

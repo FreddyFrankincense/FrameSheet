@@ -128,7 +128,7 @@ const ARCHIVE_DIRECTORS = [
   { name: 'Dario Argento', country: 'Italy', genres: ['Horror', 'Mystery', 'Thriller'] },
   { name: 'Satoshi Kon', country: 'Japan', genres: ['Animation', 'Mystery', 'Thriller'] },
   { name: 'Hou Hsiao-hsien', country: 'Taiwan', genres: ['Drama', 'History'] },
-  { name: 'steven Soderbergh', country: 'USA', genres: ['Crime', 'Thriller', 'Comedy'] },
+  { name: 'Steven Soderbergh', country: 'USA', genres: ['Crime', 'Thriller', 'Comedy'] },
   { name: 'Éric Rohmer', country: 'France', genres: ['Romance', 'Drama', 'Comedy'] },
   { name: 'Tsai Ming-liang', country: 'Taiwan', genres: ['Drama'] },
   { name: 'Lucrecia Martel', country: 'Argentina', genres: ['Drama', 'Mystery'] },
@@ -303,6 +303,26 @@ export function generateHighVolumeFilmArchive(
       if (rewatch) tags.push('rewatch');
     }
 
+    const reviewTemplates = [
+      `Relentlessly action-packed from the opening sequence through its breathless third act; ${meta.director} stages every set-piece with razor-sharp precision and tactile practical effects.`,
+      `A hypnotic slow-burn character study anchored by visceral cinematography and a haunting score that lingers long after the credits roll.`,
+      `Delivers a career-best performance at its center, balancing bleak atmosphere with unexpected dark humor and tightly plotted tension.`,
+      `Pure kinetic cinema: an action-packed masterclass in spatial choreography, thunderous sound design, and practical effects work.`,
+      `Intimate, melancholic, and deeply human. ${meta.director} crafts a lush visual poem with razor-sharp dialogue and an emotional gut-punch in the final reel.`,
+      `Endlessly rewatchable late-night thriller with neon-lit framing, propulsive editing, and a haunting score that elevates every scene.`,
+      `Starts as a taut procedural before erupting into an action-packed, high-stakes finale with remarkable practical effects and staging.`,
+      `A bold, uncompromising slow-burn drama from ${meta.director} featuring visceral cinematography and an unforgettable third act payoff.`,
+      `Sharp, atmospheric, and fiercely original—combines a career-best performance with razor-sharp dialogue and immaculate production design.`,
+      `Watched on 35mm repertory print (${meta.country}, ${meta.runtimeMinutes}m). ${meta.director}'s command of tone turns a bleak atmosphere into something transcendent and rewatchable.`,
+    ];
+
+    let reviewNote = '';
+    if (isWatchlistEntry) {
+      reviewNote = `Synced from Letterboxd Watchlist (added ${dateStr}).`;
+    } else if (i < 60 || ratingHash % 2 === 0) {
+      reviewNote = reviewTemplates[(ratingHash + i) % reviewTemplates.length];
+    }
+
     entries.push({
       id: `${meta.slug}-${seedOffset}-${i}`,
       title: meta.title,
@@ -322,11 +342,7 @@ export function generateHighVolumeFilmArchive(
       country: meta.country,
       customRank: isWatchlistEntry ? null : i + 1,
       tier: isWatchlistEntry ? 'Unranked' : inferTierFromRating(finalRating),
-      notes: isWatchlistEntry
-        ? `Synced from Letterboxd Watchlist (added ${dateStr}).`
-        : i < 45
-        ? `Logged in ${watchYear} diary (${meta.country}, ${meta.runtimeMinutes}m). Directed by ${meta.director}.`
-        : '',
+      notes: reviewNote,
     });
   }
 
@@ -351,6 +367,54 @@ export function generateHighVolumeFilmArchive(
   return entries;
 }
 
+function cloneArchive(films: FilmEntry[]): FilmEntry[] {
+  return films.map((f) => ({
+    ...f,
+    tags: [...f.tags],
+    genres: [...f.genres],
+  }));
+}
+
+function buildPrimaryProfileWithSampleEdits(): {
+  baselineFilms: FilmEntry[];
+  workingFilms: FilmEntry[];
+} {
+  const baselineFilms = generateHighVolumeFilmArchive(2150, 1, 0);
+  const workingFilms = cloneArchive(baselineFilms);
+
+  // Seed 3 representative FrameSheet edits so deviation callouts and revert controls are immediately visible:
+  // 1. Alter the review text on Rank #1 film to demonstrate inline word-level review diff callouts
+  const rank1Film = workingFilms.find((f) => f.customRank === 1);
+  if (rank1Film && rank1Film.notes) {
+    rank1Film.notes = rank1Film.notes.replace(
+      'razor-sharp',
+      'career-defining, razor-sharp'
+    ) + ' Upgraded on second 70mm screening.';
+  }
+
+  // 2. Adjust star rating on Rank #2 film compared to Letterboxd baseline
+  const rank2Film = workingFilms.find((f) => f.customRank === 2);
+  if (rank2Film) {
+    rank2Film.rating = rank2Film.rating === 5.0 ? 4.5 : 5.0;
+    rank2Film.tier = inferTierFromRating(rank2Film.rating);
+  }
+
+  // 3. Toggle a Watchlist item to Logged (Watched) in FrameSheet compared to Letterboxd's Watchlist truth
+  const firstWatchlistFilm = workingFilms.find((f) => f.watchlist);
+  if (firstWatchlistFilm) {
+    firstWatchlistFilm.watchlist = false;
+    firstWatchlistFilm.rating = 4.0;
+    firstWatchlistFilm.watchedDate = '2026-10-30';
+    firstWatchlistFilm.tier = 'A';
+  }
+
+  return { baselineFilms, workingFilms };
+}
+
+const primaryData = buildPrimaryProfileWithSampleEdits();
+const compare1Baseline = generateHighVolumeFilmArchive(1680, 4, 0.2);
+const compare2Baseline = generateHighVolumeFilmArchive(1240, 9, -0.25);
+
 export const INITIAL_PROFILES: ProfileAccount[] = [
   {
     id: 'profile-primary',
@@ -360,7 +424,24 @@ export const INITIAL_PROFILES: ProfileAccount[] = [
     lastSyncedAt: '2026-10-30 21:45 UTC',
     profileUrl: 'https://letterboxd.com/janderson_cinema/',
     bio: '8-year Letterboxd archive (2,150 logged films, 35mm repertory screenings, festival diaries, and complete ratings ledger).',
-    films: generateHighVolumeFilmArchive(2150, 1, 0),
+    films: primaryData.workingFilms,
+    baselineFilms: primaryData.baselineFilms,
+    importedCsvStructure: {
+      preset: 'diary',
+      headers: [
+        'Date',
+        'Name',
+        'Year',
+        'Letterboxd URI',
+        'Rating',
+        'Rewatch',
+        'Tags',
+        'Watched Date',
+      ],
+      filename: 'diary.csv',
+      dateOrder: 'desc',
+      useFixedOneDecimalRating: false,
+    },
   },
   {
     id: 'profile-compare-1',
@@ -370,7 +451,8 @@ export const INITIAL_PROFILES: ProfileAccount[] = [
     lastSyncedAt: '2026-10-30 20:10 UTC',
     profileUrl: 'https://letterboxd.com/elena_rostova/',
     bio: 'Film programmer & genre maximalist (1,680 logged films across international horror, sci-fi, and melodrama).',
-    films: generateHighVolumeFilmArchive(1680, 4, 0.2),
+    films: cloneArchive(compare1Baseline),
+    baselineFilms: compare1Baseline,
   },
   {
     id: 'profile-compare-2',
@@ -380,6 +462,25 @@ export const INITIAL_PROFILES: ProfileAccount[] = [
     lastSyncedAt: '2026-10-29 14:20 UTC',
     profileUrl: 'https://letterboxd.com/marcus_vance/',
     bio: 'Hard-boiled crime, 1970s New Hollywood, and international noir archive (1,240 logged films).',
-    films: generateHighVolumeFilmArchive(1240, 9, -0.25),
+    films: cloneArchive(compare2Baseline),
+    baselineFilms: compare2Baseline,
+    importedCsvStructure: {
+      preset: 'diary',
+      headers: [
+        'Date',
+        'Name',
+        'Year',
+        'Letterboxd URI',
+        'Rating',
+        'Rewatch',
+        'Tags',
+        'Watched Date',
+      ],
+      filename: 'diary.csv',
+      dateOrder: 'desc',
+      useFixedOneDecimalRating: false,
+    },
   },
 ];
+
+

@@ -11,7 +11,13 @@ import {
   Upload,
 } from 'lucide-react';
 import { ExternalScrapeResponse, ProfileAccount } from '../types/letterboxd';
-import { parseLetterboxdCsvFiles } from '../utils/letterboxdParser';
+import { cloneFilmsArray } from '../utils/baselineDiff';
+import {
+  exportFilmsToCsv,
+  extractImportedCsvStructure,
+  getLetterboxdExportFilename,
+  parseLetterboxdCsvFiles,
+} from '../utils/letterboxdParser';
 
 interface DataSourcesViewProps {
   profiles: ProfileAccount[];
@@ -22,16 +28,16 @@ interface DataSourcesViewProps {
 }
 
 const SAMPLE_LETTERBOXD_CSV = `Date,Name,Year,Letterboxd URI,Rating,Rewatch,Tags,Watched Date
-2026-10-25,Parasite,2019,https://boxd.it/hTha,5.0,Yes,"35mm, criterion",2026-10-25
-2026-10-18,Anatomy of a Fall,2023,https://boxd.it/zSub,4.5,No,"cannes, courtroom",2026-10-18
+2026-10-25,Parasite,2019,https://boxd.it/hTha,5,Yes,"35mm, criterion",2026-10-25
+2026-10-18,Anatomy of a Fall,2023,https://boxd.it/zSub,4.5,,"cannes, courtroom",2026-10-18
 2026-10-11,Challengers,2024,https://boxd.it/zCha,4.5,Yes,"imax, score",2026-10-11
-2026-10-02,Dune: Part Two,2024,https://boxd.it/zDun,4.5,No,"70mm, sci-fi",2026-10-02
-2026-09-21,The Substance,2024,https://boxd.it/zSub2,4.0,No,"midnight, horror",2026-09-21
-2026-09-14,In the Mood for Love,2000,https://boxd.it/29tA,5.0,Yes,"wong-kar-wai, romance",2026-09-14
+2026-10-02,Dune: Part Two,2024,https://boxd.it/zDun,4.5,,"70mm, sci-fi",2026-10-02
+2026-09-21,The Substance,2024,https://boxd.it/zSub2,4,,"midnight, horror",2026-09-21
+2026-09-14,In the Mood for Love,2000,https://boxd.it/29tA,5,Yes,"wong-kar-wai, romance",2026-09-14
 2026-08-30,Zodiac,2007,https://boxd.it/29zO,4.5,Yes,"fincher, procedural",2026-08-30
-2026-08-19,Poor Things,2023,https://boxd.it/zPoo,3.5,No,"arthouse",2026-08-19
-2026-08-05,The Thing,1982,https://boxd.it/29tH,5.0,Yes,"carpenter, horror",2026-08-05
-2026-07-22,Mulholland Drive,2001,https://boxd.it/29mD,5.0,Yes,"lynch, mystery",2026-07-22`;
+2026-08-19,Poor Things,2023,https://boxd.it/zPoo,3.5,,"arthouse",2026-08-19
+2026-08-05,The Thing,1982,https://boxd.it/29tH,5,Yes,"carpenter, horror",2026-08-05
+2026-07-22,Mulholland Drive,2001,https://boxd.it/29mD,5,Yes,"lynch, mystery",2026-07-22`;
 
 export const DataSourcesView: React.FC<DataSourcesViewProps> = ({
   profiles,
@@ -89,7 +95,8 @@ export const DataSourcesView: React.FC<DataSourcesViewProps> = ({
         lastSyncedAt: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC',
         profileUrl: data.profileUrl,
         bio: data.bio,
-        films: data.films,
+        films: cloneFilmsArray(data.films),
+        baselineFilms: cloneFilmsArray(data.films),
       };
 
       onAddOrUpdateProfile(newProfile, true);
@@ -128,15 +135,15 @@ export const DataSourcesView: React.FC<DataSourcesViewProps> = ({
     if (uploadedFiles.length === 0) return;
 
     const parsedFilms = parseLetterboxdCsvFiles(uploadedFiles);
+    const detectedStructure = extractImportedCsvStructure(uploadedFiles);
 
     if (csvTargetMode === 'merge') {
       const target = profiles.find((p) => p.id === activeProfileId);
       if (target) {
-        const mergedContent = parseLetterboxdCsvFiles(uploadedFiles);
         const existingMap = new Map(
           target.films.map((f) => [`${f.title.toLowerCase()}::${f.year}`, f])
         );
-        mergedContent.forEach((f) => {
+        parsedFilms.forEach((f) => {
           existingMap.set(`${f.title.toLowerCase()}::${f.year}`, f);
         });
         const combined = Array.from(existingMap.values());
@@ -144,12 +151,17 @@ export const DataSourcesView: React.FC<DataSourcesViewProps> = ({
           {
             ...target,
             lastSyncedAt: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC',
-            films: combined,
+            films: cloneFilmsArray(combined),
+            baselineFilms: cloneFilmsArray(combined),
+            importedCsvStructure:
+              detectedStructure.preset !== 'watchlist'
+                ? detectedStructure
+                : target.importedCsvStructure || detectedStructure,
           },
           true
         );
         setCsvStatus(
-          `Merged ${parsedFilms.length} CSV entries into @${target.username} (${combined.length} total films).`
+          `Merged ${parsedFilms.length} CSV entries into @${target.username} (${combined.length} total films). Schema preserved: ${detectedStructure.headers.join(', ')}`
         );
         setUploadedFiles([]);
         return;
@@ -171,11 +183,15 @@ export const DataSourcesView: React.FC<DataSourcesViewProps> = ({
       lastSyncedAt: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC',
       profileUrl: `https://letterboxd.com/${cleanUser}/`,
       bio: `Imported from ${uploadedFiles.map((f) => f.filename).join(', ')} (${parsedFilms.length} films).`,
-      films: parsedFilms,
+      films: cloneFilmsArray(parsedFilms),
+      baselineFilms: cloneFilmsArray(parsedFilms),
+      importedCsvStructure: detectedStructure,
     };
 
     onAddOrUpdateProfile(newProfile, true);
-    setCsvStatus(`Imported ${parsedFilms.length} films into new profile @${cleanUser}.`);
+    setCsvStatus(
+      `Imported ${parsedFilms.length} films into new profile @${cleanUser} (Matched export headers: ${detectedStructure.headers.join(', ')}).`
+    );
     setUploadedFiles([]);
     setCsvUsername('');
     setCsvDisplayName('');
@@ -186,7 +202,28 @@ export const DataSourcesView: React.FC<DataSourcesViewProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'sample-letterboxd-diary.csv';
+    a.download = 'diary.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportProfileCsv = (
+    prof: ProfileAccount,
+    mode: 'logged' | 'watchlist'
+  ) => {
+    const csv = exportFilmsToCsv(prof.films, {
+      preset: mode === 'watchlist' ? 'watchlist' : 'match_imported',
+      importedStructure: prof.importedCsvStructure,
+    });
+    const filename =
+      mode === 'watchlist'
+        ? 'watchlist.csv'
+        : getLetterboxdExportFilename('match_imported', prof.importedCsvStructure, false);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -218,7 +255,8 @@ export const DataSourcesView: React.FC<DataSourcesViewProps> = ({
           lastSyncedAt: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC',
           profileUrl: `https://letterboxd.com/${cleanUser}/`,
           bio: data.bio,
-          films: data.films,
+          films: cloneFilmsArray(data.films),
+          baselineFilms: cloneFilmsArray(data.films),
         };
         onAddOrUpdateProfile(newProfile, true);
         setRawPasteContent('');
@@ -291,28 +329,50 @@ export const DataSourcesView: React.FC<DataSourcesViewProps> = ({
                   )}
                 </div>
 
-                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
-                  <button
-                    type="button"
-                    onClick={() => onSelectActiveProfile(p.id)}
-                    className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                      isActive
-                        ? 'bg-amber-500 text-slate-950'
-                        : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
-                    }`}
-                  >
-                    {isActive ? 'Active in Sheet' : 'Open in Sheet'}
-                  </button>
-                  {profiles.length > 1 && (
+                <div className="space-y-2 pt-2 border-t border-slate-800/80">
+                  <div className="flex items-center justify-between gap-2">
                     <button
                       type="button"
-                      onClick={() => onDeleteProfile(p.id)}
-                      title="Remove profile from workspace"
-                      className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors"
+                      onClick={() => onSelectActiveProfile(p.id)}
+                      className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                        isActive
+                          ? 'bg-amber-500 text-slate-950'
+                          : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                      }`}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      {isActive ? 'Active in Sheet' : 'Open in Sheet'}
                     </button>
-                  )}
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleExportProfileCsv(p, 'logged')}
+                        title="Export logged films in exact Letterboxd CSV format (diary.csv)"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-mono bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded text-slate-300 hover:text-amber-300 transition-colors"
+                      >
+                        <Download className="w-3 h-3" />
+                        {p.importedCsvStructure?.filename || 'diary.csv'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleExportProfileCsv(p, 'watchlist')}
+                        title="Export watchlist films in exact Letterboxd watchlist.csv format"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-mono bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded text-sky-300 hover:text-sky-200 transition-colors"
+                      >
+                        <Download className="w-3 h-3" />
+                        watchlist.csv
+                      </button>
+                      {profiles.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteProfile(p.id)}
+                          title="Remove profile from workspace"
+                          className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             );

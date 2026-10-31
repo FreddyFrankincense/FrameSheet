@@ -1,9 +1,29 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BarChart2, ChevronLeft, ChevronRight, Search, Star } from 'lucide-react';
-import { ProfileAccount } from '../types/letterboxd';
+import {
+  BarChart2,
+  Bookmark,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Filter,
+  Layers,
+  RotateCcw,
+  Search,
+  Star,
+  Trash2,
+  X,
+} from 'lucide-react';
+import { FilmEntry, ProfileAccount } from '../types/letterboxd';
+import { ViewingCalendarHeatmap } from './ViewingCalendarHeatmap';
+import { FilmGroupCohort, GroupHistogramPanel } from './GroupHistogramPanel';
 
 interface AnalyticsViewProps {
   profile: ProfileAccount;
+  activeCohort?: FilmGroupCohort | null;
+  savedCohorts?: FilmGroupCohort[];
+  onSelectCohort?: (cohort: FilmGroupCohort | null) => void;
+  onSaveCohort?: (name: string, films: FilmEntry[]) => void;
+  onDeleteSavedCohort?: (id: string) => void;
 }
 
 const RATING_BUCKETS = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0];
@@ -14,24 +34,169 @@ function formatStarGlyphs(rating: number): string {
   return '★'.repeat(full) + (half ? '½' : '');
 }
 
-export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ profile }) => {
+export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
+  profile,
+  activeCohort = null,
+  savedCohorts = [],
+  onSelectCohort,
+  onSaveCohort,
+  onDeleteSavedCohort,
+}) => {
   const [selectedRatingBucket, setSelectedRatingBucket] = useState<number | null>(null);
   const [selectedPeriodBucket, setSelectedPeriodBucket] = useState<string | null>(null);
   const [chartOrientation, setChartOrientation] = useState<'vertical' | 'horizontal'>('vertical');
   const [timelineGranularity, setTimelineGranularity] = useState<'yearly' | 'monthly'>('yearly');
+
+  // Inline quick group search / review phrase filter right inside AnalyticsView
+  const [inlineReviewPhrase, setInlineReviewPhrase] = useState<string>('');
+  const [inlineMetadataQuery, setInlineMetadataQuery] = useState<string>('');
 
   // Drilldown tray pagination & search so large buckets (e.g. 400+ films at 3.5★) stay compact
   const [trayPage, setTrayPage] = useState<number>(1);
   const [traySearch, setTraySearch] = useState<string>('');
   const TRAY_PAGE_SIZE = 12;
 
+  // Built-in quick preset cohorts derived from the active profile
+  const presetCohorts = useMemo<FilmGroupCohort[]>(() => {
+    const all = profile.films;
+    const actionPacked = all.filter(
+      (f) => f.notes && f.notes.toLowerCase().includes('action-packed')
+    );
+    const slowBurn = all.filter(
+      (f) => f.notes && f.notes.toLowerCase().includes('slow-burn')
+    );
+    const tierS = all.filter((f) => f.tier === 'S' || (f.rating !== null && f.rating >= 4.5));
+    const rewatched = all.filter((f) => f.rewatch);
+    const watchlist = all.filter((f) => f.watchlist);
+
+    const presets: FilmGroupCohort[] = [];
+    if (actionPacked.length > 0) {
+      presets.push({
+        id: 'preset-phrase-action-packed',
+        label: 'Review Phrase: "action-packed"',
+        description: `${actionPacked.length} films containing "action-packed" in review text`,
+        sourceType: 'search_results',
+        films: actionPacked,
+      });
+    }
+    if (slowBurn.length > 0) {
+      presets.push({
+        id: 'preset-phrase-slow-burn',
+        label: 'Review Phrase: "slow-burn"',
+        description: `${slowBurn.length} films containing "slow-burn" in review text`,
+        sourceType: 'search_results',
+        films: slowBurn,
+      });
+    }
+    if (tierS.length > 0) {
+      presets.push({
+        id: 'preset-tier-s',
+        label: 'Tier S Masterpieces (≥4.5★)',
+        description: `${tierS.length} highest-rated films in @${profile.username}`,
+        sourceType: 'group_section',
+        films: tierS,
+      });
+    }
+    if (rewatched.length > 0) {
+      presets.push({
+        id: 'preset-rewatched',
+        label: 'Rewatched Favorites',
+        description: `${rewatched.length} films logged as a rewatch`,
+        sourceType: 'group_section',
+        films: rewatched,
+      });
+    }
+    if (watchlist.length > 0) {
+      presets.push({
+        id: 'preset-watchlist',
+        label: 'Watchlist Queue',
+        description: `${watchlist.length} unlogged watchlist targets`,
+        sourceType: 'group_section',
+        films: watchlist,
+      });
+    }
+    return presets;
+  }, [profile.films, profile.username]);
+
+  // Compute the effective cohort when inline filters or activeCohort are applied
+  const resolvedCohort = useMemo<FilmGroupCohort>(() => {
+    let baseFilms = activeCohort ? activeCohort.films : profile.films;
+    const rPhrase = inlineReviewPhrase.trim().toLowerCase();
+    const mQuery = inlineMetadataQuery.trim().toLowerCase();
+
+    if (rPhrase) {
+      baseFilms = baseFilms.filter(
+        (f) => f.notes && f.notes.toLowerCase().includes(rPhrase)
+      );
+    }
+    if (mQuery) {
+      baseFilms = baseFilms.filter(
+        (f) =>
+          f.title.toLowerCase().includes(mQuery) ||
+          f.director.toLowerCase().includes(mQuery) ||
+          String(f.year).includes(mQuery) ||
+          f.genres.some((g) => g.toLowerCase().includes(mQuery)) ||
+          f.tags.some((t) => t.toLowerCase().includes(mQuery))
+      );
+    }
+
+    if (rPhrase || mQuery) {
+      const parts: string[] = [];
+      if (activeCohort) parts.push(activeCohort.label);
+      if (rPhrase) parts.push(`Review Phrase: "${inlineReviewPhrase.trim()}"`);
+      if (mQuery) parts.push(`Query: "${inlineMetadataQuery.trim()}"`);
+      return {
+        id: `inline-${rPhrase}-${mQuery}`,
+        label: parts.join(' + '),
+        description: `${baseFilms.length.toLocaleString()} matching films from @${profile.username}`,
+        sourceType: 'search_results',
+        films: baseFilms,
+      };
+    }
+
+    if (activeCohort) {
+      return activeCohort;
+    }
+
+    return {
+      id: `full-account-${profile.id}`,
+      label: `All Profile Films (@${profile.username})`,
+      description: `Complete catalog (${profile.films.length.toLocaleString()} entries)`,
+      sourceType: 'group_section',
+      films: profile.films,
+    };
+  }, [activeCohort, inlineReviewPhrase, inlineMetadataQuery, profile]);
+
+  const isSubsetActive =
+    activeCohort !== null ||
+    inlineReviewPhrase.trim().length > 0 ||
+    inlineMetadataQuery.trim().length > 0;
+
+  // Create a scoped profile object so subcomponents like ViewingCalendarHeatmap automatically reflect the active film group
+  const effectiveProfile = useMemo<ProfileAccount>(
+    () => ({
+      ...profile,
+      films: resolvedCohort.films,
+    }),
+    [profile, resolvedCohort.films]
+  );
+
   useEffect(() => {
     setTrayPage(1);
     setTraySearch('');
-  }, [selectedRatingBucket, selectedPeriodBucket, profile.id]);
+    setSelectedRatingBucket(null);
+    setSelectedPeriodBucket(null);
+  }, [profile.id, resolvedCohort.id]);
+
+  // Overall account mean for delta comparison
+  const accountBaselineMean = useMemo(() => {
+    const rated = profile.films.filter((f) => f.rating !== null);
+    if (rated.length === 0) return 0;
+    return rated.reduce((s, f) => s + (f.rating ?? 0), 0) / rated.length;
+  }, [profile.films]);
 
   const stats = useMemo(() => {
-    const films = profile.films;
+    const films = resolvedCohort.films;
     const ratedFilms = films.filter((f) => f.rating !== null);
     const totalCount = films.length;
     const ratedCount = ratedFilms.length;
@@ -234,10 +399,10 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ profile }) => {
       maxDecadeCount,
       topDirectors,
     };
-  }, [profile.films, timelineGranularity]);
+  }, [resolvedCohort.films, timelineGranularity]);
 
   const bucketFilteredFilms = useMemo(() => {
-    let base = profile.films;
+    let base = resolvedCohort.films;
     if (selectedRatingBucket !== null) {
       base = base.filter((f) => f.rating === selectedRatingBucket);
     } else if (selectedPeriodBucket !== null) {
@@ -258,7 +423,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ profile }) => {
       );
     }
     return base;
-  }, [profile.films, selectedRatingBucket, selectedPeriodBucket, traySearch]);
+  }, [resolvedCohort.films, selectedRatingBucket, selectedPeriodBucket, traySearch]);
 
   const trayTotalPages = Math.max(1, Math.ceil(bucketFilteredFilms.length / TRAY_PAGE_SIZE));
   const safeTrayPage = Math.min(trayPage, trayTotalPages);
@@ -275,10 +440,219 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ profile }) => {
 
   return (
     <div className="space-y-6">
+      {/* Target Film Group / Cohort Scope Selector & Live Search Builder */}
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 space-y-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <Layers className="w-4 h-4 text-amber-400 shrink-0" />
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xs font-display font-semibold uppercase tracking-wider text-slate-300">
+                  Analytics Target Group Scope
+                </h2>
+                <span
+                  className={`px-2 py-0.5 text-[11px] font-mono rounded border ${
+                    isSubsetActive
+                      ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
+                      : 'bg-slate-950 text-slate-400 border-slate-800'
+                  }`}
+                >
+                  {resolvedCohort.label} ({resolvedCohort.films.length.toLocaleString()} of{' '}
+                  {profile.films.length.toLocaleString()} films)
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Every histogram, distribution chart, calendar heatmap, and genre table on this page dynamically adapts to the active group of films.
+              </p>
+            </div>
+          </div>
+
+          {isSubsetActive && (
+            <button
+              type="button"
+              onClick={() => {
+                onSelectCohort?.(null);
+                setInlineReviewPhrase('');
+                setInlineMetadataQuery('');
+              }}
+              className="px-3 py-1.5 text-xs font-medium bg-slate-950 hover:bg-slate-800 text-amber-300 border border-amber-500/40 rounded-md inline-flex items-center gap-1.5 transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset to Full Account ({profile.films.length.toLocaleString()})</span>
+            </button>
+          )}
+        </div>
+
+        {/* Saved Groups & Quick Preset Cohort Switcher Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-800/80">
+          <span className="text-[11px] text-slate-400 mr-1">Target Cohort:</span>
+          <button
+            type="button"
+            onClick={() => {
+              onSelectCohort?.(null);
+              setInlineReviewPhrase('');
+              setInlineMetadataQuery('');
+            }}
+            className={`px-2.5 py-1 text-xs rounded border transition-colors font-mono tabular-nums ${
+              !isSubsetActive
+                ? 'bg-amber-500 text-slate-950 border-amber-400 font-semibold'
+                : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+            }`}
+          >
+            Full Account ({profile.films.length.toLocaleString()})
+          </button>
+
+          {/* If an external cohort from Spreadsheet is active and not in savedCohorts/presets */}
+          {activeCohort &&
+            !savedCohorts.some((c) => c.id === activeCohort.id) &&
+            !presetCohorts.some((c) => c.id === activeCohort.id) && (
+              <div className="inline-flex items-center rounded border bg-amber-500/20 border-amber-500/50 text-amber-200 text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInlineReviewPhrase('');
+                    setInlineMetadataQuery('');
+                  }}
+                  className="px-2.5 py-1 font-medium"
+                >
+                  {activeCohort.label} ({activeCohort.films.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSelectCohort?.(null)}
+                  className="px-1.5 py-1 hover:text-white border-l border-amber-500/30"
+                  title="Clear active cohort"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
+          {/* User-saved custom cohorts */}
+          {savedCohorts.map((cohort) => {
+            const isSelected = activeCohort?.id === cohort.id && !inlineReviewPhrase && !inlineMetadataQuery;
+            return (
+              <div
+                key={cohort.id}
+                className={`inline-flex items-center rounded border text-xs transition-colors ${
+                  isSelected
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 font-semibold'
+                    : 'bg-slate-950 text-sky-300 border-sky-500/30 hover:border-sky-400'
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelectCohort?.(cohort);
+                    setInlineReviewPhrase('');
+                    setInlineMetadataQuery('');
+                  }}
+                  className="px-2.5 py-1 inline-flex items-center gap-1"
+                >
+                  <Bookmark className="w-3 h-3" />
+                  <span>{cohort.label}</span>
+                  <span className="font-mono tabular-nums opacity-80">
+                    ({cohort.films.length})
+                  </span>
+                </button>
+                {onDeleteSavedCohort && (
+                  <button
+                    type="button"
+                    onClick={() => onDeleteSavedCohort(cohort.id)}
+                    className="px-1.5 py-1 hover:text-rose-400 border-l border-slate-800/50"
+                    title="Delete saved group"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Built-in Preset Cohorts (e.g. "action-packed", "slow-burn", Tier S, Rewatches) */}
+          {presetCohorts.map((preset) => {
+            const isSelected = activeCohort?.id === preset.id && !inlineReviewPhrase && !inlineMetadataQuery;
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => {
+                  onSelectCohort?.(preset);
+                  setInlineReviewPhrase('');
+                  setInlineMetadataQuery('');
+                }}
+                className={`px-2.5 py-1 text-xs rounded border transition-colors ${
+                  isSelected
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 font-semibold'
+                    : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-amber-300'
+                }`}
+              >
+                {preset.label}{' '}
+                <span className="font-mono tabular-nums opacity-75">
+                  ({preset.films.length})
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Inline Live Group Builder (Search Review Text or Metadata directly inside Analytics) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
+          <div className="relative">
+            <FileText className="w-3.5 h-3.5 text-amber-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={inlineReviewPhrase}
+              onChange={(e) => setInlineReviewPhrase(e.target.value)}
+              placeholder='Plot group by review phrase (e.g., "action-packed", "masterpiece")...'
+              className="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-950 border border-slate-800 rounded-md text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
+            />
+            {inlineReviewPhrase && (
+              <button
+                type="button"
+                onClick={() => setInlineReviewPhrase('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="relative">
+            <Filter className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={inlineMetadataQuery}
+              onChange={(e) => setInlineMetadataQuery(e.target.value)}
+              placeholder="Filter group by director, genre, title, or tag (e.g., Sci-Fi, Denis Villeneuve)..."
+              className="w-full pl-8 pr-7 py-1.5 text-xs bg-slate-950 border border-slate-800 rounded-md text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
+            />
+            {inlineMetadataQuery && (
+              <button
+                type="button"
+                onClick={() => setInlineMetadataQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Multi-Dimension Group Histograms (Release Year, Star Rating, Watched Year, Genre, Runtime) */}
+      <GroupHistogramPanel
+        cohort={resolvedCohort}
+        baselineAllFilms={profile.films}
+        onSaveCohort={onSaveCohort}
+      />
+
       {/* Top Metric Summary Strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-          <div className="text-xs text-slate-400 mb-1">Total Logged Films</div>
+          <div className="text-xs text-slate-400 mb-1">
+            {isSubsetActive ? 'Group Films' : 'Total Logged Films'}
+          </div>
           <div className="text-2xl font-display font-bold font-mono tabular-nums text-slate-100">
             {stats.totalCount.toLocaleString()}
           </div>
@@ -293,7 +667,16 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ profile }) => {
             {stats.meanRating.toFixed(2)} ★
           </div>
           <div className="text-xs text-slate-500 mt-1 font-mono tabular-nums">
-            Median {stats.medianRating.toFixed(1)} ★ · σ {stats.stdDev.toFixed(2)}
+            {isSubsetActive && stats.ratedCount > 0 ? (
+              <span>
+                {stats.meanRating - accountBaselineMean >= 0 ? '+' : ''}
+                {(stats.meanRating - accountBaselineMean).toFixed(2)}★ vs. account ({accountBaselineMean.toFixed(2)}★)
+              </span>
+            ) : (
+              <span>
+                Median {stats.medianRating.toFixed(1)} ★ · σ {stats.stdDev.toFixed(2)}
+              </span>
+            )}
           </div>
         </div>
 
@@ -760,6 +1143,9 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ profile }) => {
           )}
         </div>
       )}
+
+      {/* Calendar-Style Viewing & Rating Intensity Heatmap */}
+      <ViewingCalendarHeatmap profile={effectiveProfile} />
 
       {/* Secondary Two-Column Charts: Genre Bias & Release Decade Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
